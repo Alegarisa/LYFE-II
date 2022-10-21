@@ -29,19 +29,100 @@ theme_set(theme_minimal())
 d <- read_sav(here("nopublish", "PARQ.Stacked.sav"))
 ```
 # Initial cleaning & filtering
+
+"Participants were 241 families, each with at least one youth
+in grade 5, 6, 7, or 8. Since the study included both single-
+and two-parent families, outcome analyses reported
+here focus on data from the primary caregiver in the family
+as reported by parents (i.e., 237 mothers and 4 fathers)"
+
+2 = dad
+3 = mom
+
+# these are the four dads
+LY566
+LY807
+LY813
+LY858
+
 ```{r}
 
-d2 <- d %>%
-  filter(wave == 1 | wave == 2)
+# d2 <- d %>%
+#   filter(wave == 1 | wave == 2)
 
-# find a way to filter all moms and dad if mom is not present. Look at, select if... if not...
+d2 <- d %>%
+  filter(wave == 2) # 424 participants total
 ```
 
+# selecting only primary caregivers
+```{r}
+
+length(unique(d2$FAMILY)) # 241 primary caregiver per family
+
+data.frame(table(d2$FAMILY))
+
+only_moms <- d2 %>%
+  filter(resp == 3) # 237 were considered primary moms
+
+only_dads <- d2 %>%
+  filter(FAMILY == "LY566" | FAMILY == "LY807" | FAMILY == "LY813" | FAMILY == "LY858") # 4 single dads
+
+d3 <- rbind(only_moms, only_dads) %>%
+  arrange(FAMILY) # this is the data set to work with
+```
+```{r}
+d3 %>%
+  filter(MISSPARQ == 1) # family LY564 didn't complete this questionnaire... Remove from analyses?
+```
 
 
 --------------------------
 ## EFA decisions 
 --------------------------
+
+"The tetrachoric correlation is a specific type of polychoric correlation that obtains
+when both observed variables are dichotomous" (Flora et al., 2012)
+
+# HW involvement
+```{r}
+hw <- d3 %>%
+  select(PVKA16.1, PVKA16.2, PVKA16.3, PVKA16.4, PVKA16.5, PVKA16.6, PVKA16.7, PVKA16.8, PVKA16.9, PVKA16.10, PVKA16.11, PVKA16.12, PVKA16.13, PVKA16.14, PVKA16.15, PVKA16.16)
+```
+0 = Not apply
+1 = apply
+
+* low loading
+** very low loading
+
+
+**Youth has full responsibility for getting homework home; try to stay out of it (PVKA16.1)
+**I have given up (helping youth get homework done)
+Youth has certain time to do homework
+*Youth has certain place to do homework
+I sit with youth while s|he does homework
+I help youth when s|he is stuck on homework
+I help youth by quizzing her|him to prepare for tests, etc.
+I give youth incentives, like special privileges, special treats, etc.
+I use sanctions, punishment, discipline actions
+*I remind youth to do homework
+I check with youth to be sure homework is done
+I check, correct homework with youth
+I check with teacher about how well homework is done
+I help access other resources (library, art supplies, computer labs etc.)
+I help youth practice skills (read, go over problems, etc.)
+I limit noise or distractions when youth is doing homework (PVKA16.16)
+
+
+```{r}
+fa(hw, n.obs = NA, rotate = "none", fm = "uls", cor = "tet") # here still need to investigate if uls is the best extraction method for tetrachocric cor
+```
+```{r}
+# PARALLEL ANALYSIS
+
+fa.parallel(hw, n.obs=NULL, fm="uls", fa="fa", nfactors=1, main="Parallel Analysis Scree Plots", n.iter=20, error.bars=FALSE, se.bars=FALSE, SMC=FALSE, ylabel=NULL, show.legend=TRUE, sim=TRUE, quant=.95, cor="tet", use="pairwise", plot=TRUE, correct=.5) # suggested number of factors 4 (with our without first 2 items)
+```
+
+
 
 # Homework Involvement (17) -- JUNTOS as model
 ```{r eval=FALSE}
